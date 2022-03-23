@@ -140,7 +140,6 @@ function calci(number)
 	//subtraction
 	else if(number=='-')
 	{
-	document.getElementById("displayer1").value=out;
 	document.getElementById('*').style.backgroundColor="#000000a6";
 	document.getElementById('/').style.backgroundColor="#000000a6";
 	document.getElementById('+').style.backgroundColor="#000000a6";
@@ -155,7 +154,7 @@ function calci(number)
 	document.getElementById(number).style.backgroundColor="red";
     out+=document.getElementById("displayer").value;
 	document.getElementById("displayer").value=" -";
-	document.getElementById("displayer1").value=out;
+	document.getElementById("displayer1").value=out+" -";
 	}
 	else{
 	document.getElementById(number).style.backgroundColor="red";
@@ -168,7 +167,6 @@ function calci(number)
 	//multiplication
 	else if(number=='*')
 	{
-	document.getElementById("displayer1").value=out;
 	document.getElementById('+').style.backgroundColor="#000000a6";
 	document.getElementById('/').style.backgroundColor="#000000a6";
 	document.getElementById('-').style.backgroundColor="#000000a6";
@@ -368,83 +366,71 @@ function numberFormat(input){
     function evaluator(expression)
     {
         expression=expression.replaceAll(",","");
-        console.log(expression);
-        let tokens = expression.split(' ');
-        console.log(tokens);
+        let total = expression.split(' ');
         let values = [];
-        let ops = [];
-  
-        for (let i = 0; i < tokens.length; i++)
+        let operator = [];
+        let openCount=0;
+        let closeCount=0;
+        for (let i = 0; i < total.length; i++)
         {
-            if (tokens[i] == ' ' || tokens[i] == '')
+            if (total[i] == ' ' || total[i] == '')
             {
                 continue;
             }
-  
 
-            if (tokens[i] >= '0' && tokens[i] <= '9'  || tokens[i]<=0)
+            if (total[i]<=0  ||total[i]>=0)
             {
                 let sbuf = "";
-                while (i < tokens.length &&
-                        tokens[i] >= '0' &&
-                            tokens[i] <= '9' || tokens[i]=='.' || tokens[i]<=0)
+                while ( total[i]=='.' || total[i]<=0||total[i]>=0)
                 {
-                    sbuf = sbuf + tokens[i++];
+                    sbuf = sbuf + total[i++];
                 }
-                values.push(parseFloat(sbuf, 10));
-                  i--;
+                values.push(parseFloat(sbuf));
+                i--;
             }
   
-            else if (tokens[i] == '(')
+            else if (total[i] == '(')
             {
-                ops.push(tokens[i]);
+                operator.push(total[i]);
+                openCount++
             }
 
-            else if (tokens[i] == ')')
+            else if (total[i] == ')')
             {
-                while (ops[ops.length - 1] != '(')
+				closeCount++;
+                while (operator[operator.length - 1] != '(')
                 {
-                  values.push(applyOp(ops.pop(),
-                                   values.pop(),
-                                  values.pop()));
+                  values.push(solve(operator.pop(), values.pop(), values.pop()));
                 }
-                ops.pop();
+                operator.pop();
             }
-            else if (tokens[i] == '+' ||
-                     tokens[i] == '-' ||
-                     tokens[i] == '*' ||
-                     tokens[i] == '/')
-            {
-                  
 
-                while (ops.length > 0 &&
-                         hasPrecedence(tokens[i],
-                                     ops[ops.length - 1]))
+            else if (total[i] == '+' ||   total[i] == '-' || total[i] == '*' || total[i] == '/')
+            {
+
+                while (operator.length > 0 && precedenceChecker(total[i],operator[operator.length - 1]))
                 {
-                  values.push(applyOp(ops.pop(),
-                                   values.pop(),
-                                 values.pop()));
+                  values.push(solve(operator.pop(), values.pop(), values.pop()));
                 }
-  
-                ops.push(tokens[i]);
+                operator.push(total[i]);
             }
         }
-  
 
-        while (ops.length > 0)
+        while (operator.length > 0)
         {
-            values.push(applyOp(ops.pop(),
-                             values.pop(),
-                            values.pop()));
+            values.push(solve(operator.pop(), values.pop(), values.pop()));
         }
+      if(openCount!=closeCount)
+	{
+	return "check the brackets";
+	}
   
         var out=values.pop()
-		console.log(out)
         return out;
     }
   
 
-    function hasPrecedence(op1, op2)
+    function precedenceChecker(op1, op2)
     {
         if (op2 == '(' || op2 == ')')
         {
@@ -462,7 +448,7 @@ function numberFormat(input){
     }
   
 
-    function applyOp(op, b, a)
+    function solve(op, b, a)
     {
         switch (op)
         {
